@@ -1,0 +1,39 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.pid.lock
+
+# Compiled binary addons
+build/Release
+
+# Coverage directory
+coverage/
+
+# npm and yarn cache directories
+.npm/
+.yarn/
+
+# Optional: Temporary files created by editors/IDEs
+.DS_Store      # macOS
+Thumbs.db      # Windows
+.idea/         # JetBrains IDEs
+.vscode/       # VS Code settings (if you want to exclude them)
+
+# Optional: Operating system or miscellaneous files
+*.swp          # Swap files created by some editors
+*.swo
+*.bak
+*.tmp

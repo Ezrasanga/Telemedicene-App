@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Book Appointment - Telemedicine App</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Book Appointment</h1>
+        <nav>
+            <ul>
+                <li><a href="index.html">Home</a></li>
+                <li><a href="register.html">Register</a></li>
+                <li><a href="login.html">Login</a></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        <!-- <form id="bookForm" action="/api/book" method="POST"> -->
+        <form id="bookForm">
+            <label for="patient_id">Patient ID</label>
+            <input type="text" id="patient_id" name="patient_id" required>
+
+            <label for="doctor_id">Doctor ID</label>
+            <input type="text" id="doctor_id" name="doctor_id" required>
+
+            <label for="appointment_date">Date</label>
+            <input type="date" id="appointment_date" name="appointment_date" required>
+
+            <label for="appointment_time">Time</label>
+            <input type="time" id="appointment_time" name="appointment_time" required>
+
+            <button type="submit">Book Appointment</button>
+        </form>
+    </main>
+    <!-- Add this before the <footer> tag in each HTML file -->
+<div id="notification" style="display:none; position:fixed; top:20px; right:20px; background:#4caf50; color:white; padding:10px; border-radius:5px; z-index:1000;"></div>
+    <footer>
+        <p>&copy; 2025 Telemedicine App. All rights reserved.</p>
+    </footer>
+    <script src="scripts/book.js"></script>
+</body>
+</html>
