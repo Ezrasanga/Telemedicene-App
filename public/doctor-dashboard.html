@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - Telemedicine</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <header class="site-header">
+        <nav class="nav" aria-label="Main navigation">
+            <a class="brand" href="/"><span class="brand-mark">+</span> Telemedicine</a>
+            <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle><span class="nav-toggle-lines"></span></button>
+            <ul class="nav-links" data-nav-links><li><a href="/doctor/dashboard" aria-current="page">Appointments</a></li><li><a href="/">Home</a></li><li><a href="/doctor/login" data-logout="/doctor/login">Sign out</a></li></ul>
+        </nav>
+    </header>
+    <main class="page">
+        <section class="card">
+            <h1>My appointments</h1>
+            <div id="doctorAppointments" class="appointment-grid" aria-live="polite">
+                <div class="empty-state">Loading appointments...</div>
+            </div>
+        </section>
+    </main>
+    <footer class="footer">&copy; <script>document.write(new Date().getFullYear())</script> Telemedicine App</footer>
+    <script src="/scripts/ui.js"></script>
+    <script src="/scripts/navbar.js"></script>
+    <script src="/scripts/doctor-dashboard.js"></script>
+</body>
+</html>

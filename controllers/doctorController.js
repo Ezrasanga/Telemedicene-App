@@ -1,14 +1,48 @@
-const db = require('../config/db'); // Ensure this path correctly points to your database configuration
+const doctorService = require('../services/doctorService');
+const { setAuthCookies } = require('../middleware/auth');
 
 // Get all doctors
-exports.getAllDoctors = async (req, res) => {
+exports.getAllDoctors = async (req, res, next) => {
     try {
-        // Execute the query to fetch all doctors from the database
-        const [rows] = await db.query('SELECT * FROM doctors'); // Assuming 'doctors' is your table name
-        res.status(200).json(rows);
+        res.status(200).json(await doctorService.listDoctors());
     } catch (error) {
-        // Log the error and send a 500 response if something goes wrong
-        console.error('Error fetching doctors:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        next(error);
+    }
+};
+
+exports.register = async (req, res, next) => {
+    try {
+        await doctorService.registerDoctor(req.body);
+        res.status(201).json({ message: 'Doctor account created successfully' });
+    } catch (error) {
+        if (error?.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                error: { code: 'CONFLICT', message: 'A doctor account with this email already exists' }
+            });
+        }
+        next(error);
+    }
+};
+
+exports.login = async (req, res, next) => {
+    try {
+        const subject = await doctorService.authenticateDoctor(req.body.email, req.body.password);
+        if (!subject) {
+            return res.status(401).json({
+                error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' }
+            });
+        }
+        setAuthCookies(res, subject);
+        res.json({ message: 'Doctor login successful' });
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.getAppointments = async (req, res, next) => {
+    try {
+        res.json(await doctorService.listAppointments(req.user.id));
+    } catch (error) {
+        next(error);
     }
 };

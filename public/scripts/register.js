@@ -1,11 +1,3 @@
-function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.style.background = isError ? '#f44336' : '#4caf50';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', 3000);
-}
-
 document.getElementById('registerForm').addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -18,6 +10,7 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
     };
 
     try {
+        setBusy(event.submitter, true, 'Creating account...');
         const response = await fetch('/api/register', {
             method: 'POST',
             headers: {
@@ -34,10 +27,12 @@ document.getElementById('registerForm').addEventListener('submit', async (event)
                 window.location.href = '/login.html';
             }, 1500);
         } else {
-            showNotification(result.message, true);
+            showNotification(apiMessage(result, 'Unable to create account'), true);
         }
     } catch (error) {
         console.error('Error registering patient:', error);
         showNotification('An error occurred. Please try again.', true);
+    } finally {
+        setBusy(event.submitter, false);
     }
 });

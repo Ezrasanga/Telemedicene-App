@@ -1,47 +1,49 @@
-const pool = require('../config/db');
+const appointmentService = require('../services/appointmentService');
 
-// Function to book an appointment
-exports.bookAppointment = async (req, res) => {
-    const { doctor_id, appointment_date, appointment_time } = req.body;
-
-    if (!req.session.userId) {
-        return res.status(401).json({ message: 'Please log in to book an appointment' });
-    }
-
-    if (!doctor_id || !appointment_date || !appointment_time) {
-        return res.status(400).json({ message: 'Doctor, date, and time are required' });
-    }
-
-    const query = `
-        INSERT INTO Appointments 
-        (patient_id, doctor_id, appointment_date, appointment_time, status) 
-        VALUES (?, ?, ?, ?, "scheduled")
-    `;
-
+exports.bookAppointment = async (req, res, next) => {
     try {
-        await pool.execute(query, [req.session.userId, doctor_id, appointment_date, appointment_time]);
+        await appointmentService.bookAppointment(req.user.id, req.body);
         res.status(201).json({ message: 'Appointment booked successfully' });
     } catch (error) {
-        console.error('Error booking appointment:', error);
-        res.status(500).json({ message: 'Failed to book appointment' });
+        if (error.status) {
+            return res.status(error.status).json({
+                error: { code: error.status === 409 ? 'CONFLICT' : 'NOT_FOUND', message: error.message }
+            });
+        }
+        next(error);
     }
 };
 
-exports.getPatientAppointments = async (req, res) => {
-    if (!req.session.userId) {
-        return res.status(401).json({ message: 'Please log in to view appointments' });
-    }
-
+exports.getPatientAppointments = async (req, res, next) => {
     try {
-        const [appointments] = await pool.execute(
-            `SELECT * FROM Appointments
-             WHERE patient_id = ?
-             ORDER BY appointment_date, appointment_time`,
-            [req.session.userId]
-        );
-        res.json(appointments);
+        res.json(await appointmentService.listAppointments(req.user.id));
     } catch (error) {
-        console.error('Error fetching appointments:', error);
-        res.status(500).json({ message: 'Failed to fetch appointments' });
+        next(error);
+    }
+};
+
+exports.rescheduleAppointment = async (req, res, next) => {
+    try {
+        await appointmentService.rescheduleAppointment(req.params.id, req.user.id, req.body);
+        res.json({ message: 'Appointment rescheduled successfully' });
+    } catch (error) {
+        if (error.status) {
+            return res.status(error.status).json({
+                error: { code: error.status === 409 ? 'CONFLICT' : 'NOT_FOUND', message: error.message }
+            });
+        }
+        next(error);
+    }
+};
+
+exports.cancelAppointment = async (req, res, next) => {
+    try {
+        await appointmentService.cancelAppointment(req.params.id, req.user.id);
+        res.json({ message: 'Appointment cancelled successfully' });
+    } catch (error) {
+        if (error.status) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: error.message } });
+        }
+        next(error);
     }
 };

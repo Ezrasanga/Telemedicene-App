@@ -1,11 +1,3 @@
-function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.style.background = isError ? '#f44336' : '#4caf50';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', 3000);
-}
-
 document.getElementById('loginForm').addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -16,26 +8,33 @@ document.getElementById('loginForm').addEventListener('submit', async (event) =>
     };
 
     try {
+        setBusy(event.submitter, true, 'Signing in...');
         const response = await fetch('/api/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(data)
         });
 
         const result = await response.json();
         if (response.ok) {
             showNotification(result.message);
-            // Redirect after a short delay so user sees the notification
+            const requestedNext = new URLSearchParams(window.location.search).get('next');
+            const destination = requestedNext && requestedNext.startsWith('/')
+                ? requestedNext
+                : '/profile.html';
             setTimeout(() => {
-                window.location.href = '/profile.html';
+                window.location.href = destination;
             }, 1500);
         } else {
-            showNotification(result.message, true);
+            showNotification(apiMessage(result, 'Unable to sign in'), true);
         }
     } catch (error) {
         console.error('Error logging in patient:', error);
         showNotification('An error occurred. Please try again.', true);
+    } finally {
+        setBusy(event.submitter, false);
     }
 });

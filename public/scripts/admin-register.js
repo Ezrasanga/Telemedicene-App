@@ -1,11 +1,3 @@
-function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.style.background = isError ? '#f44336' : '#4caf50';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', 3000);
-}
-
 document.getElementById('adminRegisterForm').addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -13,16 +5,17 @@ document.getElementById('adminRegisterForm').addEventListener('submit', async (e
     const data = {
         username: form.username.value,
         password: form.password.value,
-        role: form.role.value,
         email: form.email.value
     };
 
     try {
+        setBusy(event.submitter, true, 'Creating administrator...');
         const response = await fetch('/api/admin/register', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(data)
         });
 
@@ -34,10 +27,12 @@ document.getElementById('adminRegisterForm').addEventListener('submit', async (e
                 window.location.href = '/admin-login.html';
             }, 1500);
         } else {
-            showNotification(result.message, true);
+            showNotification(apiMessage(result, 'Unable to create administrator'), true);
         }
     } catch (error) {
         console.error('Error registering admin:', error);
         showNotification('An error occurred. Please try again.', true);
+    } finally {
+        setBusy(event.submitter, false);
     }
 });

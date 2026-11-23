@@ -1,15 +1,7 @@
-function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.style.background = isError ? '#f44336' : '#4caf50';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', 3000);
-}
-
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         // Fetch the profile data
-        const response = await fetch('/api/profile');
+        const response = await fetch('/api/profile', { credentials: 'same-origin' });
         const user = await response.json();
 
         // Populate the form with the user data
@@ -33,11 +25,13 @@ document.getElementById('profileForm').addEventListener('submit', async (event) 
     };
 
     try {
+        setBusy(event.submitter, true, 'Saving...');
         const response = await fetch('/api/profile', {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(data)
         });
 
@@ -45,10 +39,12 @@ document.getElementById('profileForm').addEventListener('submit', async (event) 
         if (response.ok) {
             showNotification(result.message);
         } else {
-            showNotification(result.message, true);
+            showNotification(apiMessage(result, 'Unable to update profile'), true);
         }
     } catch (error) {
         console.error('Error updating profile:', error);
         showNotification('An error occurred. Please try again.', true);
+    } finally {
+        setBusy(event.submitter, false);
     }
 });

@@ -1,11 +1,3 @@
-function showNotification(message, isError = false) {
-    const notification = document.getElementById('notification');
-    notification.textContent = message;
-    notification.style.background = isError ? '#f44336' : '#4caf50';
-    notification.style.display = 'block';
-    setTimeout(() => notification.style.display = 'none', 3000);
-}
-
 document.getElementById('adminLoginForm').addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -16,11 +8,13 @@ document.getElementById('adminLoginForm').addEventListener('submit', async (even
     };
 
     try {
+        setBusy(event.submitter, true, 'Signing in...');
         const response = await fetch('/api/admin/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
+            credentials: 'same-origin',
             body: JSON.stringify(data)
         });
 
@@ -32,10 +26,12 @@ document.getElementById('adminLoginForm').addEventListener('submit', async (even
                 window.location.href = '/admin-dashb.html';
             }, 1500);
         } else {
-            showNotification(result.message, true);
+            showNotification(apiMessage(result, 'Unable to sign in'), true);
         }
     } catch (error) {
         console.error('Error logging in admin:', error);
         showNotification('An error occurred. Please try again.', true);
+    } finally {
+        setBusy(event.submitter, false);
     }
 });

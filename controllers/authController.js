@@ -1,12 +1,16 @@
-const pool = require('../config/db');
-const bcrypt = require('bcryptjs');
 const nodemailer = require('nodemailer');
-require('dotenv').config(); // Ensure environment variables are loaded
+require('dotenv').config();
+const {
+    setAuthCookies,
+    clearAuthCookies,
+    REFRESH_COOKIE
+} = require('../middleware/auth');
+const authService = require('../services/authService');
+const jwt = require('jsonwebtoken');
 
-// Configure Nodemailer transporter
 const transporter = nodemailer.createTransport({
     service: 'gmail',
-    host: "smtp.gmail.com",
+    host: 'smtp.gmail.com',
     port: 587,
     secure: true,
     auth: {
@@ -15,125 +19,110 @@ const transporter = nodemailer.createTransport({
     }
 });
 
-// Function to send confirmation emails
-const sendConfirmationEmail = (email, subject, message) => {
-    const mailOptions = {
+function sendConfirmationEmail(email) {
+    transporter.sendMail({
         from: process.env.EMAIL,
         to: email,
-        subject: "Successfully created an account",
-        text:"Welcome to Telemedicine!"
-    };
-
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.error('Error sending email:', error);
-        } else {
-            console.log('Email sent:', info.response);
-        }
+        subject: 'Successfully created an account',
+        text: 'Welcome to Telemedicine!'
+    }, error => {
+        if (error) console.error('Error sending email:', error);
     });
-};
+}
 
-// User registration
-exports.register = async (req, res) => {
-    const { first_name, last_name, email, password } = req.body;
-
+exports.register = async (req, res, next) => {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const query = 'INSERT INTO Patients (first_name, last_name, email, password_hash) VALUES (?, ?, ?, ?)';
-        await pool.execute(query, [first_name, last_name, email, hashedPassword]);
-        
-        // Send confirmation email
-        sendConfirmationEmail(email, 'Registration Successful', 'Thank you for registering with Telemedicine App.');
-        
+        await authService.registerPatient(req.body);
+        sendConfirmationEmail(req.body.email);
         res.status(201).json({ message: 'Patient registered successfully' });
     } catch (error) {
-        console.error('Error registering patient:', error);
-        res.status(500).json({ message: 'Failed to register patient' });
-    }
-};
-
-// User login
-exports.login = async (req, res) => {
-    const { email, password } = req.body;
-
-    try {
-        const [rows] = await pool.execute('SELECT * FROM Patients WHERE email = ?', [email]);
-
-        if (rows.length > 0 && await bcrypt.compare(password, rows[0].password_hash)) {
-            req.session.userId = rows[0].id;
-            res.json({ message: 'Logged in successfully' });
-        } else {
-            res.status(401).json({ message: 'Invalid credentials' });
+        if (error?.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                error: { code: 'CONFLICT', message: 'A patient with this email already exists' }
+            });
         }
-    } catch (error) {
-        console.error('Error logging in patient:', error);
-        res.status(500).json({ message: 'Failed to login patient' });
+        next(error);
     }
 };
 
-// Admin registration
-exports.adminRegister = async (req, res) => {
-    const { username, password, role, email } = req.body;
-
+exports.login = async (req, res, next) => {
     try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const query = 'INSERT INTO Admin (username, password_hash, role) VALUES (?, ?, ?)';
-        await pool.execute(query, [username, hashedPassword, role]);
+        const subject = await authService.authenticatePatient(req.body.email, req.body.password);
+        if (!subject) {
+            return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } });
+        }
+        setAuthCookies(res, subject);
+        res.json({ message: 'Logged in successfully' });
+    } catch (error) {
+        next(error);
+    }
+};
 
-        // Send confirmation email
-        sendConfirmationEmail(email, 'Admin Registration Successful', 'Welcome to the Telemedicine App as an Admin!');
-        
+exports.adminRegister = async (req, res, next) => {
+    try {
+        await authService.registerAdmin(req.body);
+        sendConfirmationEmail(req.body.email);
         res.status(201).json({ message: 'Admin registered successfully' });
     } catch (error) {
-        console.error('Error registering admin:', error);
-        res.status(500).json({ message: 'Failed to register admin' });
-    }
-};
-
-// Admin login
-exports.adminLogin = async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        const [rows] = await pool.execute('SELECT * FROM Admin WHERE username = ?', [username]);
-
-        if (rows.length > 0 && await bcrypt.compare(password, rows[0].password_hash)) {
-            req.session.adminId = rows[0].id;
-            res.json({ message: 'Logged in successfully' });
-        } else {
-            res.status(401).json({ message: 'Invalid credentials' });
+        if (error?.code === 'ER_DUP_ENTRY') {
+            return res.status(409).json({
+                error: { code: 'CONFLICT', message: 'An administrator with this username or email already exists' }
+            });
         }
-    } catch (error) {
-        console.error('Error logging in admin:', error);
-        res.status(500).json({ message: 'Failed to login admin' });
+        next(error);
     }
 };
 
-// Fetch user profile
-exports.getProfile = async (req, res) => {
+exports.adminLogin = async (req, res, next) => {
     try {
-        const [rows] = await pool.execute('SELECT first_name, last_name, email FROM Patients WHERE id = ?', [req.session.userId]);
-        if (rows.length > 0) {
-            res.json(rows[0]);
-        } else {
-            res.status(404).json({ message: 'User not found' });
+        const subject = await authService.authenticateAdmin(req.body.username, req.body.password);
+        if (!subject) {
+            return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Invalid credentials' } });
         }
+        setAuthCookies(res, subject);
+        res.json({ message: 'Logged in successfully' });
     } catch (error) {
-        console.error('Error fetching profile:', error);
-        res.status(500).json({ message: 'Failed to fetch profile' });
+        next(error);
     }
 };
 
-// Update user profile
-exports.updateProfile = async (req, res) => {
-    const { first_name, last_name, email } = req.body;
-    
+exports.getProfile = async (req, res, next) => {
     try {
-        const query = 'UPDATE Patients SET first_name = ?, last_name = ? WHERE id = ? AND email = ?';
-        await pool.execute(query, [first_name, last_name, req.session.userId, email]);
+        const profile = await authService.getProfile(req.user.id);
+        if (!profile) {
+            return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'User not found' } });
+        }
+        res.json(profile);
+    } catch (error) {
+        next(error);
+    }
+};
+
+exports.updateProfile = async (req, res, next) => {
+    try {
+        await authService.updateProfile(req.user.id, req.body);
         res.json({ message: 'Profile updated successfully' });
     } catch (error) {
-        console.error('Error updating profile:', error);
-        res.status(500).json({ message: 'Failed to update profile' });
+        next(error);
     }
+};
+
+exports.refresh = (req, res) => {
+    const token = req.cookies?.[REFRESH_COOKIE];
+    if (!token) {
+        return res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Refresh authentication required' } });
+    }
+    try {
+        const payload = jwt.verify(token, process.env.JWT_REFRESH_SECRET, { issuer: 'telemedicine-app' });
+        setAuthCookies(res, { id: payload.id, role: payload.role });
+        res.json({ message: 'Authentication refreshed' });
+    } catch (error) {
+        clearAuthCookies(res);
+        res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Invalid or expired refresh authentication' } });
+    }
+};
+
+exports.logout = (req, res) => {
+    clearAuthCookies(res);
+    res.json({ message: 'Logged out successfully' });
 };

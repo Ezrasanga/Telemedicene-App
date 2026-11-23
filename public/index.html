@@ -7,27 +7,35 @@
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>Welcome to the Telemedicine App</h1>
-        <nav>
-            <ul>
-                <li><a href="register.html">Register</a></li>
-                <li><a href="login.html">Login</a></li>
-                <li><a href="book.html">Book Appointment</a></li>
-                <li><a href="admin-register.html">Admin Register</a></li>
-                <li><a href="admin-login.html">Admin Login</a></li>
-                <li><a href="/appointments">Appointments</a></li>
+    <header class="site-header">
+        <nav class="nav" aria-label="Main navigation">
+            <a class="brand" href="index.html"><span class="brand-mark">+</span> Telemedicine</a>
+            <button class="nav-toggle" type="button" aria-label="Toggle navigation" aria-expanded="false" data-nav-toggle><span class="nav-toggle-lines"></span></button>
+            <ul class="nav-links" data-nav-links>
+                <li data-auth-required data-role="patient"><a href="/book.html">Book appointment</a></li>
+                <li data-auth-required data-role="patient"><a href="/appointments">My appointments</a></li>
+                <li data-guest-only><a href="/login.html">Patient login</a></li>
+                <li data-guest-only><a href="/doctor/login">Doctor login</a></li>
+                <li data-guest-only><a href="/admin-login.html">Admin</a></li>
             </ul>
         </nav>
     </header>
-    <main>
-        <h2>Your Health, Our Priority</h2>
-        <p>Manage your health efficiently with our telemedicine platform.</p>
+    <main class="page">
+        <section class="hero">
+            <div>
+                <h1>Care, on your schedule.</h1>
+                <p>Book trusted clinicians, manage consultations, and keep every step of your care journey in one calm, secure place.</p>
+                <div class="actions">
+                    <a class="button" href="book.html" data-auth-required data-role="patient">Book appointment</a>
+                    <a class="button button-secondary" href="/appointments" data-auth-required data-role="patient">View appointments</a>
+                </div>
+            </div>
+            <div class="hero-panel" aria-hidden="true">+</div>
+        </section>
     </main>
-    <!-- Add this before the <footer> tag in each HTML file -->
-<div id="notification" style="display:none; position:fixed; top:20px; right:20px; background:#4caf50; color:white; padding:10px; border-radius:5px; z-index:1000;"></div>
-    <footer>
+    <footer class="footer">
         <p>&copy; <script>document.write(new Date().getFullYear())</script> Telemedicine App. All rights reserved.</p>
     </footer>
+    <script src="/scripts/navbar.js"></script>
 </body>
 </html>
