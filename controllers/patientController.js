@@ -1,19 +1,17 @@
 const pool = require('../config/db'); // Ensure you import the pool correctly
 
-// Get all patients
 exports.getPatients = async (req, res) => {
+    if (!req.session.adminId) {
+        return res.status(401).json({ message: 'Admin login required' });
+    }
+
     try {
-        // Execute the query to fetch all patients from the database
-        const [rows] = await pool.execute('SELECT * FROM Patients');
+        const [rows] = await pool.execute(
+            'SELECT id, first_name, last_name, email FROM Patients'
+        );
         res.json(rows);
     } catch (error) {
-        // Log the error and send a 500 response if something goes wrong
         console.error('Error fetching patients:', error);
         res.status(500).json({ message: 'Internal server error' });
     }
-};
-
-module.exports = {
-    register,
-    login
 };

@@ -1,12 +1,7 @@
 const express = require('express');
-const app = express();
-const patientRoutes = require('./routes/patients');
+const router = express.Router();
+const patientController = require('../controllers/patientController');
 
-app.use('/api', patientRoutes);
+router.get('/', patientController.getPatients);
 
-// Other middleware and routes can be defined here
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+module.exports = router;

@@ -11,7 +11,6 @@ document.getElementById('bookForm').addEventListener('submit', async (event) => 
 
     const form = event.target;
     const data = {
-        patient_id: form.patient_id.value,
         doctor_id: form.doctor_id.value,
         appointment_date: form.appointment_date.value,
         appointment_time: form.appointment_time.value
@@ -31,7 +30,7 @@ document.getElementById('bookForm').addEventListener('submit', async (event) => 
             showNotification(result.message);
             // Redirect after a short delay so user sees the notification
             setTimeout(() => {
-                window.location.href = '/appointments.html';
+                window.location.href = '/appointments';
             }, 1500);
         } else {
             showNotification(result.message, true);

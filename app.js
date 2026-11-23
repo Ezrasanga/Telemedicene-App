@@ -9,6 +9,7 @@ require('dotenv').config();
 const authRoutes = require('./routes/auth');
 const appointmentRoutes = require('./routes/appointments');
 const doctorRoutes = require('./routes/doctors');
+const patientRoutes = require('./routes/patients');
 
 // Initialize app
 const app = express();
@@ -44,6 +45,10 @@ app.get('/book', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'book.html'));
 });
 
+app.get('/appointments', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'appointment.html'));
+});
+
 app.get('/admin-register', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin-register.html'));
 });
@@ -55,7 +60,8 @@ app.get('/admin-login', (req, res) => {
 // API routes
 app.use('/api', authRoutes);
 app.use('/api', appointmentRoutes);
-app.use('/api', doctorRoutes);
+app.use('/api/doctors', doctorRoutes);
+app.use('/api/patients', patientRoutes);
 
 // Start server
 const PORT = process.env.PORT || 3000;

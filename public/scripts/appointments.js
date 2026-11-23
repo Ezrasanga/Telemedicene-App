@@ -10,14 +10,24 @@ function showNotification(message, isError = false) {
 document.addEventListener('DOMContentLoaded', async () => {
     try {
         const response = await fetch('/api/appointments');
-        const appointments = await response.json();
+        const result = await response.json();
+
+        if (!response.ok) {
+            showNotification(result.message || 'Error fetching appointments', true);
+            return;
+        }
 
         const appointmentsContainer = document.getElementById('appointments');
-        appointments.forEach(appointment => {
+        if (result.length === 0) {
+            appointmentsContainer.textContent = 'No appointments found.';
+            return;
+        }
+
+        result.forEach(appointment => {
             const appointmentDiv = document.createElement('div');
             appointmentDiv.className = 'appointment';
             appointmentDiv.innerHTML = `
-                <h3>Appointment with Dr. ${appointment.doctor_name}</h3>
+                <h3>Appointment with Dr. ${appointment.doctor_name || appointment.doctor_id}</h3>
                 <p>Date: ${appointment.appointment_date}</p>
                 <p>Time: ${appointment.appointment_time}</p>
                 <p>Status: ${appointment.status}</p>
